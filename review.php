@@ -1,58 +1,80 @@
 <?php
     require_once("support.php");
 
+    if (isset($_POST["addReview"])) {
+            $host = "localhost";
+        	$user = "dbuser";
+        	$password = "goodbyeWorld";
+        	$database = "groupproj";
+        	$table = "reviews";
+        	$db_connection = new mysqli($host, $user, $password, $database);
 
-$host = "localhost";
-$user = "id5526878_dbuser";
-$password = "goodbyeWorld";
-$database = "id5526878_groupproj";
-$table = "reviews";
-$toAdd = "";
-$db_connection = new mysqli($host, $user, $password, $database);
-if ($db_connection->connect_error) {
-    die($db_connection->connect_error);
-}
-if (isset($_POST["addReview"])) {
-    $displayName = $_POST["displayName"];
-    $rating = $_POST["rating"];
-    $review = $_POST["review"];
-    $file = $_POST["file"];
+        	if ($db_connection->connect_error) {
+                    		die($db_connection->connect_error);
+                    	}
 
-    $fileData = addslashes(file_get_contents($file));
+                    	 $displayName = $_POST["displayName"];
+                         $rating = $_POST["rating"];
+                         $review = $_POST["review"];
 
-    $sqlQuery = sprintf("insert into $table values ('$displayName', '$rating', '$review', '$file')");
+			 $file = $_POST["file"];
+			 $fileData = addslashes(file_get_contents($file));
+			 $docMimeType = "image/jpeg";
 
 
-    $result = $db_connection->query($sqlQuery);
-    if (!$result) {
-        die("Insertion failed: " . $db_connection->error);
+                $sqlQuery = "insert into $table (docName, docMimeType, image, name, rating, review) values ";
+                	$sqlQuery .= "('{$file}', '{$docMimeType}', '{$fileData}', '{$displayName}', '{$rating}', '{$review}')";
+
+                    /*    $sqlQuery = sprintf("insert into $table (docName, docMimeType, image, name, rating, review) values('{$file}','{$docMimeType}', '{$fileData}','{$displayName}', '{$rating}', '{$review}')"); */
+
+
+                        $result = $db_connection->query($sqlQuery);
+                        	if (!$result) {
+                        		die("Insertion failed: " . $db_connection->error);
+                        	}
+
+                    	 $db_connection->close();
     }
-    $db_connection->close();
-}
-$query = "select * from $table";
-$result = $db_connection->query($query);
-if (!$result) {
-    die("Retrieval failed: ". $db_connection->error);
-} else {
-    $num_rows = $result->num_rows;
-    for ($row_index = 0; $row_index < $num_rows; $row_index++) {
-        $result->data_seek($row_index);
-        $row = $result->fetch_array(MYSQLI_ASSOC);
-        $displayNameItem = $row['name'];
-        $ratingItem = $row['rating'];
-        $reviewItem = $row['review'];
-        $imageItem = $row['image'];
-        /*$realImage = base64_decode($imageItem);
-		      $realImage2 = "<img src='data:image/jpeg;base64,{$realImage}' alt='pic'>";*/
-        $toAdd .= "<tr><td class='name'>$displayNameItem</td>
-                       <td class='rating'>$ratingItem". "/5</td>
-                       <td class= 'reviewText'>$reviewItem</td>
-                       <td><img src='$imageItem' class='userImage' alt='User Pic'></td></tr>";
-        }
-}
 
-$topPart = <<<EOBODY
 
+
+    $host = "localhost";
+            	$user = "dbuser";
+            	$password = "goodbyeWorld";
+            	$database = "groupproj";
+            	$table = "reviews";
+            	$toAdd = "";
+            	 $db_connection = new mysqli($host, $user, $password, $database);
+        	if ($db_connection->connect_error) {
+        		die($db_connection->connect_error);
+        	}
+        	$query = "select * from $table";
+        	$result = $db_connection->query($query);
+        	if (!$result) {
+           		die("Retrieval failed: ". $db_connection->error);
+    	    } else {
+            	$num_rows = $result->num_rows;
+            	for ($row_index = 0; $row_index < $num_rows; $row_index++) {
+                      $result->data_seek($row_index);
+                      $row = $result->fetch_array(MYSQLI_ASSOC);
+                      $displayNameItem = $row['name'];
+                      $ratingItem = $row['rating'];
+                      $reviewItem = $row['review'];
+		      $imageItem = $row['docName'];
+		      $mimeType = $row['docMimeType'];
+		      $data = $row['image'];
+
+
+                      $toAdd .= "<tr><td class='name'>$displayNameItem</td>
+                                 <td class='rating'>$ratingItem". "/5</td>
+                                 <td class= 'reviewText'>$reviewItem</td>
+				 <td><img src=\"retrievingDocument.php?fileToRetrieve=$imageItem\" alt=\"Image To Display\" height='100' width='100'/></td></tr>";
+                }
+           }
+
+$db_connection->close();
+
+    $topPart = <<<EOBODY
         <nav class="navbar-default navbar stuff" id="bar">
                     <div class="container-fluid">
                         <div class="navbar-header">
@@ -74,6 +96,7 @@ $topPart = <<<EOBODY
                  				<table class="table table-bordered table-striped">
                  					<thead>
                  						<tr>
+
                  							<th class="head">
                  								Name
                  							</th>
@@ -83,6 +106,9 @@ $topPart = <<<EOBODY
                  							<th class="head">
                  								Review
                  							</th>
+                 							<th class="head">
+                                                                                                     								Image
+                                                                                                     							</th>
                  						</tr>
                  					</thead>
                  					<tbody>
@@ -92,17 +118,23 @@ $topPart = <<<EOBODY
                                           <td class= "reviewText" >This thing is amazing! Employers should use this
                                           website to find out the toxicity of those they are hiring.
                                          </td>
+                                         <td>
+                                                                                                                          <img src= 'bulb.jpg' alt='Image To Display' height='100' width='100'/>
+                                                                                                                          </td>
                  						</tr>
                  						<tr>
-                                        <td class="name">Wallace Loh</td>
-                                        <td class="rating" >5/5</td>
-                                        <td class= "reviewText" >Amazing website. I cannot beleive this was made
-                                                                 by UMD students. The creators of this website deserve an A for their grade.
-                                                                I will fire their professor if they don't receive an A on this project.
-                                                              </td>
-                                        </tr>
+                                                                                  <td class="name">Wallace Loh</td>
+                                                                                  <td class="rating" >5/5</td>
+                                                                                  <td class= "reviewText" >Amazing website. I cannot beleive this was made
+                                                                                  by UMD students. The creators of this website deserve an A for their grade.
+                                                                                  I will fire their professor if they don't receive an A on this project.
+                                                                                 </td>
+                                                                                 <td>
+                                                                                 <img src= 'bulb.jpg' alt='Image To Display' height='100' width='100'/>
+                                                                                 </td>
+                                                         						</tr>
 
-                                        $toAdd;
+                                                         						$toAdd<br><br>
                  					</tbody>
                  				</table>
                  			</div>
@@ -118,12 +150,10 @@ $topPart = <<<EOBODY
                          <input type="radio" name="rating" value="3" checked> 3
                          <input type="radio" name="rating" value="4"> 4
                          <input type="radio" name="rating" value="5"> 5<br><br>
+			 <strong>Add Your Image:</strong> <br><br>
+			 <input type="file" name="file" id="file">
+			 <br>
 
-                         <strong>Add Your Image:</strong> <br><br>
-			             <input type="file" name="file" id="file">
-			             <br>
-                         <strong>Upload Additional Information: </strong><input type="file" name="fileToUpload">
-                         <br>
 
                          <strong>Your Review: </strong>
                           <textarea rows="6" cols="80" name="review"></textarea>
@@ -134,6 +164,7 @@ $topPart = <<<EOBODY
                           <input type="submit" name="addReview" class="btn btn-primary btn-lg btn-block" value = "Add Review">
                           <br>
                           <input type="reset" class="btn btn-primary btn-lg btn-block"  value = "Clear">
+
                                              <br>
                                              </div>
 
